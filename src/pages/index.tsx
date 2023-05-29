@@ -29,7 +29,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<ITransaction[]>([{ name, description, price: 0, datetime }]);
   const [showBudget, setShowBudget] = useState(false)
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
 
   useEffect(() => {
     getAllTransactions().then((data) => {
@@ -98,7 +98,7 @@ export default function Home() {
 
         <div className="grid min-w-full place-items-center mx-auto content-center items-center justify-center min-h-screen" >
 
-          <h1 className="select-none text-center text-[#7dd3fc] font-bold mt-5 text-3xl uppercase">Saldo em conta</h1>
+          <h1 className="select-none text-center text-[#7dd3fc] font-bold text-3xl uppercase mt-24">Saldo em conta</h1>
           <div className="bg-transparent p-5 flex justify-center content-center items-center gap-5">
 
             {/* <h2 className="peer text-center text-white font-bold m-0 text-2xl transition-transform ease-in-out duration-500">{showBudget ? availableBudget : '**********'}</h2> */}
