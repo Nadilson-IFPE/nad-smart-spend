@@ -1,11 +1,12 @@
-import { Inter } from "next/font/google";
 import { Key, useEffect, useState } from "react";
 import { initMongoose } from "@/lib/mongoose";
 import Transaction from "@/models/Transaction";
-import { GetServerSideProps } from "next";
+import { GetStaticProps } from "next";
 import eyefill from '/public/eye-fill.svg'
 import eyeslash from '/public/eye-slash.svg'
 import Image from "next/image";
+import Paginator from "@/components/Paginator";
+import { paginate } from "@/helpers/paginate";
 
 
 interface ITransaction {
@@ -15,15 +16,11 @@ interface ITransaction {
   datetime: string;
 }
 
-type TransactionProps = {
-  mytransactions: Array<ITransaction>
-}
-
 export default function Home() {
   //const url = process.env.NEXT_PUBLIC_API_URL + '/transactions';
   const url = '/api/transactions';
 
-  const budget = 10000;
+  const budget = 0;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -31,6 +28,8 @@ export default function Home() {
   const [datetime, setDatetime] = useState('');
   const [transactions, setTransactions] = useState<ITransaction[]>([{ name, description, price: 0, datetime }]);
   const [showBudget, setShowBudget] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     getAllTransactions().then((data) => {
@@ -83,7 +82,6 @@ export default function Home() {
     return response;
   };
 
-
   let balance = 0;
   if (transactions.length > 0) {
     transactions.forEach(function (transaction) {
@@ -91,6 +89,8 @@ export default function Home() {
     });
   }
   const availableBudget = (balance + budget).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const paginatedItems = paginate(Array.from(transactions).reverse(), currentPage, pageSize);
 
   return (
     <>
@@ -128,8 +128,11 @@ export default function Home() {
           </div>
 
           <div className={`p-3 w-screen max-w-[800px] ` + (transactions.length <= 0 ? 'hidden' : '')}>
-            <span className="flex mb-4 font-bold text-blue-300 uppercase text-center justify-center content-center items-center">Todos os Registros:</span>
-            {transactions.length > 0 && transactions.map((transaction, index: Key) => (
+            <span className="flex mb-4 font-bold text-blue-300 uppercase text-center justify-center content-center items-center">Todos os Registros ({transactions.length})</span>
+            <p className="font-bold text-center justify-center content-center items-center mb-4">
+              Exibindo página <span className="font-bold text-red-500">{currentPage} de {Math.ceil(transactions.length / pageSize)}</span>
+            </p>
+            {transactions.length > 0 && paginatedItems.map((transaction, index: Key) => (
               <div key={index} className="flex pt-[5px] pr-0 justify-between mb-2 border-t border-solid border-[#30313D] first:border-t-0 gap-2">
                 <div className="text-left">
                   <div className="text-sm font-bold">{transaction.name}</div>
@@ -140,7 +143,15 @@ export default function Home() {
                   <div className="text-xs text-gray-500">{transaction.datetime}</div>
                 </div>
               </div>
-            )).reverse()}
+            ))}
+            <div className="pt-3 flex justify-center items-center content-center mx-auto">
+              <Paginator
+                totalItems={transactions.length}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            </div>
           </div>
 
         </div>
@@ -150,27 +161,7 @@ export default function Home() {
 }
 
 
-/* export const getStaticProps: GetStaticProps = async () => {
-  try {
-    await initMongoose();
-
-    const transactions = await Transaction.find({});;
-
-    return {
-      props: {
-        transactions: JSON.parse(JSON.stringify(transactions)),
-      },
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      notFound: true,
-    };
-  }
-}; */
-
-
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     await initMongoose();
 
@@ -188,3 +179,24 @@ export const getServerSideProps: GetServerSideProps = async () => {
     };
   }
 };
+
+
+/* export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    await initMongoose();
+
+    const transactions = await Transaction.find({});;
+
+    return {
+      props: {
+        transactions: JSON.parse(JSON.stringify(transactions)),
+      },
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      notFound: true,
+    };
+  }
+};
+ */
